@@ -11,11 +11,12 @@ public class Server
     private PrintWriter out	 = null;
 
     // constructor with port
-    public Server(int port)
-    {
-        // starts server and waits for a connection
-        try
+    public Server(int port) {
+
+        while (true)
         {
+        // starts server and waits for a connection
+        try {
             server = new ServerSocket(port);
             System.out.println("Server started");
 
@@ -27,39 +28,30 @@ public class Server
             // takes input from the client socket
             in = new DataInputStream(
                     new BufferedInputStream(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(),true);
+            out = new PrintWriter(socket.getOutputStream(), true);
 
             String line = "";
 
-            // reads message from client until "Over" is sent
-            while (!line.equals("Over"))
-            {
-                try
-                {
-                    line = in.readUTF();
-                    System.out.println(line);
-                    out.println("recived");
+            line = in.readUTF();
+            System.out.println(line);
+            out.println("recived");
 
-                }
-                catch(IOException i)
-                {
-                    System.out.println(i);
-                }
-            }
             System.out.println("Closing connection");
 
             // close connection
             socket.close();
             in.close();
+            out.close();
+            server.close();
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
-        catch(IOException i)
-        {
-            System.out.println(i);
-        }
+    }
     }
 
     public static void main(String args[])
     {
-        Server server = new Server(5000);
+        Server server = new Server(5001);
     }
 }
