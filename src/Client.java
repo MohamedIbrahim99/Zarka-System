@@ -6,6 +6,7 @@ public class Client
 {
     private static String Address = "127.0.0.1";
     private static int NumberOfNodes;
+    private static int NumberOfRunningNodes;
     private static int DefaultPort;
 
 
@@ -26,7 +27,9 @@ public class Client
             out.writeUTF(query);
 
             // print received results
-            System.out.println(new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine());
+            String response = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
+            NumberOfRunningNodes = Integer.parseInt(response.split(" ")[1]);
+            System.out.println(response.split(" ")[0]);
             System.out.println("*******************");
         }
         catch(Exception e)
@@ -62,6 +65,7 @@ public class Client
         try{
             DefaultPort = Integer.parseInt(prop.getProperty("port"));
             NumberOfNodes = Integer.parseInt(prop.getProperty("numberOfNodes"));
+            NumberOfRunningNodes = Integer.parseInt(prop.getProperty("numberOfRunningNodes"));
         }catch (Exception e){
             System.out.println("port or numberOfNodes is missing from configuration file");
             System.exit(1);
@@ -86,7 +90,7 @@ public class Client
             {
                 line = input.readLine();
                 if((line.equals("exit") | line.equals("e"))) break;
-                port = (int)( Math.random() * NumberOfNodes + (DefaultPort+1) );
+                port = (int)( Math.random() * NumberOfRunningNodes + (DefaultPort+1) );
                 client.run(line,port);
             }
             catch(IOException i)

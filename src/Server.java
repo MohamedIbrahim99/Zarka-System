@@ -43,7 +43,7 @@ public class Server
                 out.println(port+" Notified");
             }else{
                 System.out.println(line);
-                out.println("recived");
+                out.println("recived "+NumberOfRunningNodes);
             }
 
             System.out.println("Closing connection\n*******************");
