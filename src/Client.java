@@ -4,6 +4,11 @@ import java.util.Properties;
 
 public class Client
 {
+    private static String Address = "127.0.0.1";
+    private static int NumberOfNodes;
+    private static int DefaultPort;
+
+
     // initialize socket and output stream
     private Socket socket;
     private DataOutputStream out;
@@ -13,7 +18,7 @@ public class Client
         try
         {
             System.out.println("Connecting to server with port "+port+" .....");
-            socket = new Socket("127.0.0.1", port);
+            socket = new Socket(Address, port);
             System.out.println("Connected");
 
             // sends output to the socket
@@ -22,6 +27,7 @@ public class Client
 
             // print received results
             System.out.println(new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine());
+            System.out.println("*******************");
         }
         catch(Exception e)
         {
@@ -53,11 +59,9 @@ public class Client
             System.out.println("Can't find configuration file.");
             System.exit(1);
         }
-        int defaultPort=0;
-        int n=0;
         try{
-            defaultPort = Integer.parseInt(prop.getProperty("port"));
-            n = Integer.parseInt(prop.getProperty("numberOfNodes"));
+            DefaultPort = Integer.parseInt(prop.getProperty("port"));
+            NumberOfNodes = Integer.parseInt(prop.getProperty("numberOfNodes"));
         }catch (Exception e){
             System.out.println("port or numberOfNodes is missing from configuration file");
             System.exit(1);
@@ -82,7 +86,7 @@ public class Client
             {
                 line = input.readLine();
                 if((line.equals("exit") | line.equals("e"))) break;
-                port = (int)( Math.random() * 1 + (defaultPort+1) );
+                port = (int)( Math.random() * NumberOfNodes + (DefaultPort+1) );
                 client.run(line,port);
             }
             catch(IOException i)
