@@ -9,11 +9,13 @@ public class ConsistentHashing {
     private SortedMap<Long,Node> circle;
     private HashFunction hashFunction ;
     private ArrayList<Node> existingNodes ;
+    private int vitualReplica ;
 
-    public ConsistentHashing(ArrayList<Node> existingNodes) {
+    public ConsistentHashing(ArrayList<Node> existingNodes,int vitualReplica) {
         this.circle = new TreeMap<Long,Node>();
         this.hashFunction = new HashFunction();
         this.existingNodes = existingNodes;
+        this.vitualReplica = vitualReplica ;
 
         /*get the existing nodes
         existingNodes = new ArrayList<Node>();
@@ -21,7 +23,9 @@ public class ConsistentHashing {
         */
         //adding the existing nodes
         for (Node n : existingNodes)
-            addInitialNodes(n);
+            for (int i = 1; i <= vitualReplica; i++) {
+                circle.put(hashFunction.hash(n.getName()+i),n);
+            }
     }
 
     public void addInitialNodes(Node newNode){
@@ -56,27 +60,31 @@ public class ConsistentHashing {
     }
 
     public void addNewNode(Node newNode){
-        long hash = hashFunction.hash(newNode.name);
 
-        //assuming that every node has a unique name
+        for (int i = 1; i <= vitualReplica; i++) {
+            long hash = hashFunction.hash(newNode.name+i);
 
-        //now selecting the part of the data that is gonna move
-        //headmap return map with key less than "hash"
-        //so if there is no keys less than hash that mean back to the largest key
+            //assuming that every node has a unique name
 
-        SortedMap<Long, Node> headMap = circle.headMap(hash);
-        SortedMap<Long, Node> tailMap = circle.tailMap(hash);
-        long previousHash = headMap.isEmpty() ? circle.lastKey() : headMap.firstKey();
-        long nextHash = tailMap.isEmpty() ? circle.firstKey() : tailMap.firstKey();
+            //now selecting the part of the data that is gonna move
+            //headmap return map with key less than "hash"
+            //so if there is no keys less than hash that mean back to the largest key
 
-
-        //--> here should send all the data that has hashValue less than
-        System.out.println("move all the data that has hashValue greater than "+
-                circle.get(previousHash).getName() +" ==> "+previousHash +
-                " from the node "+ circle.get(nextHash).getName() +" ==> " + nextHash
-                +" to the new node : " + newNode.getName() + " ==> "+hash);
+            SortedMap<Long, Node> headMap = circle.headMap(hash);
+            SortedMap<Long, Node> tailMap = circle.tailMap(hash);
+            long previousHash = headMap.isEmpty() ? circle.lastKey() : headMap.firstKey();
+            long nextHash = tailMap.isEmpty() ? circle.firstKey() : tailMap.firstKey();
 
 
-        circle.put(hashFunction.hash(newNode.name),newNode);
+            //--> here should send all the data that has hashValue less than
+            System.out.println("move all the data that has hashValue greater than " +
+                    circle.get(previousHash).getName() + " ==> " + previousHash +
+                    " from the node " + circle.get(nextHash).getName() + " ==> " + nextHash
+                    + " to the new node : " + newNode.getName() + " ==> " + hash);
+
+
+            circle.put(hashFunction.hash(newNode.name+i), newNode);
+        }
+
     }
 }
