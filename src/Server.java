@@ -96,7 +96,6 @@ public class Server
 
                                 for (int i = 1; i < ReplicationFactor; i++) {
                                     try {
-                                        System.out.println(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1);
                                         System.out.println(addValueRemote(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
                                         writeCounter++;
                                     }catch (Exception e){
@@ -107,7 +106,6 @@ public class Server
                             }else{
                                 for (int i = 0; i < ReplicationFactor; i++) {
                                     try {
-                                        System.out.println(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1);
                                         System.out.println(addValueRemote(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
                                         writeCounter++;
                                     }catch (Exception e){
