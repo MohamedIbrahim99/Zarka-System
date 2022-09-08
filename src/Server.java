@@ -2,6 +2,9 @@ import ConsistentHashing.ConsistentHashing;
 
 import java.net.*;
 import java.io.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Properties;
 
 public class Server
@@ -33,6 +36,7 @@ public class Server
         int targetPort;
         String key;
         String value;
+        String timeStamp;
         int writeCounter;
 
         while (true)
@@ -56,6 +60,7 @@ public class Server
             line = "";
             key="";
             value="";
+            ArrayList<String> values;
             writeCounter = 0;
 
             line = in.readUTF();
@@ -76,13 +81,47 @@ public class Server
                     targetPort = Integer.parseInt(ch.get(key));
                     System.out.println("targetPort "+targetPort);
                     if(line.split(" ")[0].equalsIgnoreCase("get")){
+                        values = new ArrayList<>();
                         try {
                             if(targetPort==port){
-                                value = getValue(key);
+                                values.add(getValue(key));
+
+                                for (int i = 1; i < ReplicationFactor; i++) {
+                                    try {
+                                        values.add(getValueRemote(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key));
+                                    }catch (Exception e){
+                                        System.out.println(e);
+                                    }
+                                }
                             }else{
-                                value = getValueRemote(targetPort,key);
+                                for (int i = 0; i < ReplicationFactor; i++) {
+                                    try {
+                                        if(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1 == port){
+                                            values.add(getValue(key));
+                                        }else{
+                                            values.add(getValueRemote(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key));
+                                        }
+                                    }catch (Exception e){
+                                        System.out.println(e);
+                                    }
+                                }
                             }
-                            out.println(value+" "+NumberOfRunningNodes);
+                            if(values.size()>=QuorumR){
+                                System.out.println("Success Reads: "+values.size());
+                                value = values.get(0).split("#")[0];
+                                timeStamp = values.get(0).split("#")[1];
+                                for (int i = 1; i < values.size(); i++) {
+                                    if(new Date(Long.parseLong(values.get(i).split("#")[1])).compareTo(new Date(Long.parseLong(timeStamp)))>0){
+                                        value = values.get(i).split("#")[0];
+                                        timeStamp = values.get(i).split("#")[1];
+                                    }
+                                }
+                                out.println(value+" "+NumberOfRunningNodes);
+                                //Fix read
+                            }else{
+                                System.out.println("Success Reads: "+values.size());
+                                out.println("Failed "+NumberOfRunningNodes);
+                            }
                         }catch (Exception e){
                             out.println(e);
                         }
@@ -92,11 +131,12 @@ public class Server
                         value = line.split(" ")[2];
                         try {
                             if(targetPort==port){
-                                addValue(key,value);writeCounter++;
+                                addValue(key,value, Instant.now().getEpochSecond()+"");writeCounter++;
 
                                 for (int i = 1; i < ReplicationFactor; i++) {
                                     try {
-                                        System.out.println(addValueRemote(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
+                                        System.out.println(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1);
+                                        System.out.println(addValueRemote(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value,Instant.now().getEpochSecond()+""));
                                         writeCounter++;
                                     }catch (Exception e){
                                         System.out.println(e);
@@ -106,7 +146,11 @@ public class Server
                             }else{
                                 for (int i = 0; i < ReplicationFactor; i++) {
                                     try {
-                                        System.out.println(addValueRemote(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
+                                        if(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1 == port){
+                                            addValue(key,value, Instant.now().getEpochSecond()+"");writeCounter++;
+                                        }else{
+                                            System.out.println(addValueRemote(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value,Instant.now().getEpochSecond()+""));
+                                        }
                                         writeCounter++;
                                     }catch (Exception e){
                                         System.out.println(e);
@@ -201,12 +245,12 @@ public class Server
         return respose;
     }
 
-    private String addValueRemote(int port, String key,String value) throws Exception {
+    private String addValueRemote(int port, String key,String value,String timeStamp) throws Exception {
         Socket socket;
         DataOutputStream out;
         socket = new Socket(Address, port);
         out = new DataOutputStream(socket.getOutputStream());
-        out.writeUTF(key+"#"+value);
+        out.writeUTF(key+"#"+value+"#"+timeStamp);
         String respose = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
         socket.close();
         out.close();
@@ -224,7 +268,7 @@ public class Server
             while((l=br.readLine())!=null)
             {
                 if(l.split("#")[0].equals(key)){
-                    value = l.split("#")[1];
+                    value = l.substring(l.indexOf('#')+1);
                 }
             }
             fr.close();    //closes the stream and release the resources
@@ -236,11 +280,11 @@ public class Server
         return value;
     }
 
-    private void addValue(String key,String value) throws Exception {
+    private void addValue(String key,String value, String timeStamp) throws Exception {
             File file=new File(port+".txt");    //creates a new file instance
             FileWriter fw=new FileWriter(file,true);   //reads the file
             BufferedWriter bw=new BufferedWriter(fw);  //creates a buffering character input stream
-            bw.append(key+"#"+value+"\n");
+            bw.append(key+"#"+value+"#"+timeStamp+"\n");
             bw.flush();
             bw.close();    //closes the stream and release the resources
     }
