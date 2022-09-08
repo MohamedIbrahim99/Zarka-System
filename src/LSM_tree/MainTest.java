@@ -18,10 +18,10 @@ public class MainTest {
         lsmTreeHandler.add(58,"value58");
         lsmTreeHandler.add(19,"value19");
         lsmTreeHandler.add(1,"value1");
-       // lsmTreeHandler.add(3,"value3");
-//        lsmTreeHandler.add(100,"value100");//
-//        lsmTreeHandler.add(20,"value20");//
-//        lsmTreeHandler.add(9,"value9");//
+        lsmTreeHandler.add(3,"value3");
+        lsmTreeHandler.add(100,"value100");//
+        lsmTreeHandler.add(20,"value20");//
+        lsmTreeHandler.add(9,"value9");//
 
         Map<String, String> map= lsmTreeHandler.get(87);
         System.out.println(map.get("key") + " , " + map.get("value") + " , " + map.get("timestamp"));
@@ -29,8 +29,8 @@ public class MainTest {
         System.out.println(map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
         map= lsmTreeHandler.get(1);
         System.out.println(map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
-        map= lsmTreeHandler.get(17);
-        //System.out.println(map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
+        map= lsmTreeHandler.get(5);
+        System.out.println(map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
 
 
 

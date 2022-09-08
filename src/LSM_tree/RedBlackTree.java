@@ -111,6 +111,8 @@ class RedBlackTree
         else
             parent.rightChild = current;
         handleColors( newKey );
+        inorderTraversal2(header.rightChild);
+        System.out.println(nodesInTree());
     }
 
     //create handleColors() method to maintain the colors of Red-black tree nodes
@@ -242,6 +244,19 @@ class RedBlackTree
             ///offset += text.length();
 
             inorderTraversal(node.rightChild, fWriter);
+        }
+        return hashIndex;
+    }
+
+    private Map<String, Long> inorderTraversal2(RedBlackNode node) {
+        if (node != nullNode)
+        {
+            inorderTraversal2(node.leftChild);
+
+            System.out.print(node.key + " - ");
+            System.out.println();
+
+            inorderTraversal2(node.rightChild);
         }
         return hashIndex;
     }

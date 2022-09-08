@@ -11,18 +11,18 @@ import java.util.Map;
 
 public class MemTable {
 
-    RedBlackTree redBlackTree;
+    RedBlackTree2 redBlackTree;
     int size = 0;
     // Constructor for creating Red-Black tree
     public MemTable()
     {
-        this.redBlackTree = new RedBlackTree(Integer.MIN_VALUE);
+        this.redBlackTree = new RedBlackTree2();
     }
 
     // Add a new node in the memTable
     public int add (int newKey, String newValue)
     {
-        redBlackTree.insertNewNode(newKey, newValue);
+        redBlackTree.insert(newKey, newValue);
         size += 1;
         return size;
     }
