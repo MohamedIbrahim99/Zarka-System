@@ -33,9 +33,10 @@ public class MemTable {
         return redBlackTree.searchNode(key);
     }
 
+    Map<String, Long> hashIndex;
     // Write to the disk as an SSTable file.
     // Since the tree is orderly, it can be written directly to the disk in sequence.
-    public void writeInSSTable (String path, List<Map<String, Long>> hashIndecies)
+    public void writeInSSTable (String path)
     {
         Map<String, Long> hashIndex = new HashMap<>();
         // Try block to check if exception occurs
@@ -56,7 +57,7 @@ public class MemTable {
             // Print the exception
             System.out.print(e.getMessage());
         }
-        hashIndecies.add(hashIndex);
+        this.hashIndex = hashIndex;
         //return hashIndex;
     }
 

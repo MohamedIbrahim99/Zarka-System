@@ -36,8 +36,8 @@ public class LSMTreeHandler {
             throw new RuntimeException(e);
         }
         // creating an object of the class Thread using Thread(Runnable r)
-        this.th1 = new Thread(() -> memTableA.writeInSSTable(folderPath, hashIndecies));
-        this.th2 = new Thread(() -> memTableB.writeInSSTable(folderPath, hashIndecies));
+        this.th1 = new Thread(() -> memTableA.writeInSSTable(folderPath));
+        this.th2 = new Thread(() -> memTableB.writeInSSTable(folderPath));
     }
 
     // Add a new node in the memTable
@@ -48,6 +48,8 @@ public class LSMTreeHandler {
             System.out.println("added to A : " + String.valueOf(newKey)+ " , " + newValue);
             if (size >= threshold && !th2.isAlive()) {
                 System.out.println("Switch from A to B");
+                if (!th2.getState().equals(Thread.State.NEW))
+                    hashIndecies.add(memTableB.hashIndex);
                 memTableB = new MemTable();
                 isWorkingWithA = false;
                 // the start() method moves the thread to the active state
@@ -59,6 +61,7 @@ public class LSMTreeHandler {
             System.out.println("added to B : " + String.valueOf(newKey)+ " , " + newValue);
             if (size >= threshold && !th1.isAlive()) {
                 System.out.println("Switch from B to A");
+                hashIndecies.add(memTableA.hashIndex);
                 memTableA = new MemTable();
                 isWorkingWithA = true;
                 // the start() method moves the thread to the active state
@@ -130,6 +133,5 @@ public class LSMTreeHandler {
         }
         return null;
     }
-
 
 }
