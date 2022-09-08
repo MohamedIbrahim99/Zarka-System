@@ -208,6 +208,7 @@ public class RedBlackTree2
             long offset = fWriter.length();
             // Writing into file
             fWriter.write(text.getBytes());
+            fWriter.writeBytes(System.getProperty("line.separator"));
             // Printing the contents of a file
             System.out.println("Append in the SSTable : " + text);
 

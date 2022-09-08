@@ -33,8 +33,6 @@ public class MainTest {
         System.out.println(map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
 
 
-
-
     }
 
 }
