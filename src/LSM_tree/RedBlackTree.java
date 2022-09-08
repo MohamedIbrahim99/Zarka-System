@@ -1,11 +1,19 @@
 package LSM_tree;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 // Creating a node for the red-black tree. A node has left and right child, element and color of the node
 class RedBlackNode
 {
     RedBlackNode leftChild, rightChild;
     int key;
     String value;
+    String timestamp;
     int color;
 
     // Constructor to set the value of a node having no left and right child
@@ -19,6 +27,7 @@ class RedBlackNode
     {
         this.key = key;
         this.value = value;
+        this.timestamp = String.valueOf(new Date().getTime());
         this.leftChild = leftChild;
         this.rightChild = rightChild;
         color = 1;
@@ -95,7 +104,7 @@ class RedBlackTree
 
         //create a node having no left and right child and pass it to the current node
         current = new RedBlackNode(newKey, newValue, nullNode, nullNode);
-
+        System.out.println(String.valueOf(current.key));
         //connect the current node with the parent
         if (newKey < parent.key)
             parent.leftChild = current;
@@ -176,14 +185,15 @@ class RedBlackTree
         }
     }
     // Create searchNode() method to get desired node from the Red-Black tree
-    public String searchNode(int key)
+    public Map<String, String> searchNode(int key)
     {
         return searchNode(header.rightChild, key);
     }
-    private String searchNode(RedBlackNode node, int key)
+    private Map<String, String> searchNode(RedBlackNode node, int key)
     {
-        String val = null;
-        while ((node != nullNode) && val != null)
+        System.out.println(nodesInTree());
+        Map<String, String> coordinates = null;
+        while ((node != nullNode) && coordinates == null)
         {
             int nodeValue = node.key;
             if (key < nodeValue)
@@ -192,30 +202,48 @@ class RedBlackTree
                 node = node.rightChild;
             else
             {
-                val = node.value;
-                return val;
+                coordinates = new HashMap<>();
+                coordinates.put("value", node.value);
+                coordinates.put("timestamp", node.timestamp);
+                return coordinates;
             }
-            val = searchNode(node, key);
+            coordinates = searchNode(node, key);
         }
-        return null;
+        return coordinates;
     }
 
+    int count = 0;
+    ///long offset = 0;
+    final int numOfElements = 5;
+    Map<String, Long> hashIndex = new HashMap<>();
     // Create inorderTraversal() method to perform inorder traversal
-    public void inorderTraversal()
-    {
-        inorderTraversal(header.rightChild);
+    public Map<String, Long> inorderTraversal(RandomAccessFile fWriter) throws IOException {
+        inorderTraversal(header.rightChild, fWriter);
+        return hashIndex;
     }
-    private void inorderTraversal(RedBlackNode node)
-    {
+    private Map<String, Long> inorderTraversal(RedBlackNode node, RandomAccessFile fWriter) throws IOException {
         if (node != nullNode)
         {
-            inorderTraversal(node.leftChild);
-            char c = 'R';
-            if (node.color == 1)
-                c = 'B';
-            System.out.print(node.key +""+c+" ");
-            inorderTraversal(node.rightChild);
+            inorderTraversal(node.leftChild, fWriter);
+
+            // Content to be assigned to a file
+            String text = String.valueOf(node.key) + ',' + node.value + ',' + node.timestamp;
+            // assign the offset of the next write
+            long offset = fWriter.length();
+            // Writing into file
+            fWriter.write(text.getBytes());
+            // Printing the contents of a file
+            System.out.println("Append in the SSTable : " + text);
+
+            if (count % numOfElements == 0){
+                hashIndex.put(String.valueOf(node.key), offset);
+            }
+            count++;
+            ///offset += text.length();
+
+            inorderTraversal(node.rightChild, fWriter);
         }
+        return hashIndex;
     }
 
 }
