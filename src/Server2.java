@@ -66,7 +66,7 @@ public class Server2
             //New server is running
             if(line.contains("##")){
                 NumberOfRunningNodes = Integer.parseInt(line.split(" ")[0]);
-                ch.addNewNode(NumberOfNodes);
+                ch.addNewNode(NumberOfRunningNodes);
                 out.println(port+" Notified");
             }
             //Serve a client
@@ -115,7 +115,7 @@ public class Server2
                             }else{
                                 for (int i = 0; i < ReplicationFactor; i++) {
                                     try {
-                                        System.out.println(addValueRemote(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
+                                        System.out.println(addValueRemote(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
                                         writeCounter++;
                                     }catch (Exception e){}
                                 }

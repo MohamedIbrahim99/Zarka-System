@@ -61,11 +61,11 @@ public class Server
             line = in.readUTF();
 
             System.out.println(line);
-
+            ch.showCircle();
             //New server is running
             if(line.contains("##")){
                 NumberOfRunningNodes = Integer.parseInt(line.split(" ")[0]);
-                ch.addNewNode(NumberOfNodes);
+                ch.addNewNode(NumberOfRunningNodes);
                 out.println(port+" Notified");
             }
             //Serve a client
@@ -74,9 +74,7 @@ public class Server
                 if(line.contains(" ")){//I am the coordinator
                     key = line.split(" ")[1];
                     targetPort = Integer.parseInt(ch.get(key));
-
-                    System.out.println(targetPort);
-
+                    System.out.println("targetPort "+targetPort);
                     if(line.split(" ")[0].equalsIgnoreCase("get")){
                         try {
                             if(targetPort==port){
@@ -106,31 +104,24 @@ public class Server
                                     }
                                 }
 
-                                if(writeCounter>=QuorumW){
-                                    System.out.println("Success Writes: "+writeCounter);
-                                    out.println("Done "+NumberOfRunningNodes);
-                                }else{
-                                    System.out.println("Success Writes: "+writeCounter);
-                                    out.println("Failed "+NumberOfRunningNodes);
-                                }
-
                             }else{
                                 for (int i = 0; i < ReplicationFactor; i++) {
                                     try {
-                                        System.out.println(addValueRemote(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
+                                        System.out.println(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1);
+                                        System.out.println(addValueRemote(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
                                         writeCounter++;
                                     }catch (Exception e){
                                         System.out.println(e);
                                     }
                                 }
 
-                                if(writeCounter>=QuorumW){
-                                    System.out.println("Success Writes: "+writeCounter);
-                                    out.println("Done "+NumberOfRunningNodes);
-                                }else{
-                                    System.out.println("Success Writes: "+writeCounter);
-                                    out.println("Failed "+NumberOfRunningNodes);
-                                }
+                            }
+                            if(writeCounter>=QuorumW){
+                                System.out.println("Success Writes: "+writeCounter);
+                                out.println("Done "+NumberOfRunningNodes);
+                            }else{
+                                System.out.println("Success Writes: "+writeCounter);
+                                out.println("Failed "+NumberOfRunningNodes);
                             }
 
                         }catch (Exception e){
