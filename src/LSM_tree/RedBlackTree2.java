@@ -245,6 +245,7 @@ public class RedBlackTree2
             else
             {
                 coordinates = new HashMap<>();
+                coordinates.put("key", String.valueOf(node.key));
                 coordinates.put("value", node.value);
                 coordinates.put("timestamp", node.timestamp);
                 return coordinates;

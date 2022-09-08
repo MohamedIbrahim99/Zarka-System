@@ -1,10 +1,11 @@
 package LSM_tree;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class MainTest {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, InterruptedException {
         LSMTreeHandler lsmTreeHandler = new LSMTreeHandler();
 
         lsmTreeHandler.add(5,"value5"); //
@@ -23,15 +24,36 @@ public class MainTest {
         lsmTreeHandler.add(20,"value20");//
         lsmTreeHandler.add(9,"value9");//
 
-        Map<String, String> map= lsmTreeHandler.get(87);
-        System.out.println(map.get("key") + " , " + map.get("value") + " , " + map.get("timestamp"));
-        map= lsmTreeHandler.get(100);
-        System.out.println(map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
-        map= lsmTreeHandler.get(1);
-        System.out.println(map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
-        map= lsmTreeHandler.get(5);
-        System.out.println(map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
+        lsmTreeHandler.add(22,"value22");
+        lsmTreeHandler.add(55,"value55");
+        lsmTreeHandler.add(67,"value67");
+        lsmTreeHandler.add(77,"value77");
+        lsmTreeHandler.add(16,"value16");
+        lsmTreeHandler.add(91,"value91");
+        lsmTreeHandler.add(88,"value88");
+        Thread.sleep(2000);
+        lsmTreeHandler.add(13,"value22");
+        lsmTreeHandler.add(53,"value55");
+        lsmTreeHandler.add(22,"value67");
+        lsmTreeHandler.add(75,"value77");
+        lsmTreeHandler.add(70,"value16");
+        lsmTreeHandler.add(99,"value91");
+        lsmTreeHandler.add(86,"value88");
 
+        Thread.sleep(2000);
+
+        Map<String, String> map= lsmTreeHandler.get(87);
+        map= lsmTreeHandler.get(1);
+        //System.out.println("get : " +map.get("key") + " , " + map.get("value") + " , " + map.get("timestamp"));
+        map= lsmTreeHandler.get(100);
+        //System.out.println("get : " +map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
+        map= lsmTreeHandler.get(1);
+        //System.out.println("get : " +map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
+        map= lsmTreeHandler.get(5);
+        //System.out.println("get : " +map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
+        map= lsmTreeHandler.get(88);
+        //System.out.println("get : " + map.get("key") +" , " + map.get("value") +" , " + map.get("timestamp"));
+        map= lsmTreeHandler.get(86);
 
     }
 
