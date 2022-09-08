@@ -54,7 +54,7 @@ public class LSMTreeHandler {
                 th1.start();
             }
         }
-        if (!isWorkingWithA) {
+        else if (!isWorkingWithA) {
             int size = memTableB.add(newKey, newValue);
             System.out.println("added to B : " + String.valueOf(newKey)+ " , " + newValue);
             if (size >= threshold && !th1.isAlive()) {
