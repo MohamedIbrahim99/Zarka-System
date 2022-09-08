@@ -1,11 +1,10 @@
 import ConsistentHashing.ConsistentHashing;
+import LSM_tree.LSMTreeHandler;
 
 import java.net.*;
 import java.io.*;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Properties;
+import java.util.*;
 
 public class Server
 {
@@ -18,8 +17,10 @@ public class Server
     private static int QuorumR;
     private static int QuorumW;
     private static int port;
+    private static int Threshold;
 
     private static ConsistentHashing ch;
+    private static LSMTreeHandler lsm;
 
     //initialize socket and input stream
     private Socket		 socket = null;
@@ -32,6 +33,7 @@ public class Server
         this.port = port;
         notifyOthers();
         ch = new ConsistentHashing(NumberOfRunningNodes,DefaultPort,NumberOfVirtualNodes);
+        lsm = new LSMTreeHandler((port-DefaultPort)+"",Threshold);
         String line;
         int targetPort;
         String key;
@@ -60,7 +62,7 @@ public class Server
             line = "";
             key="";
             value="";
-            ArrayList<String> values;
+            ArrayList<Map<String,String>> values;
             writeCounter = 0;
 
             line = in.readUTF();
@@ -80,12 +82,19 @@ public class Server
                     key = line.split(" ")[1];
                     targetPort = Integer.parseInt(ch.get(key));
                     System.out.println("targetPort "+targetPort);
+
                     if(line.split(" ")[0].equalsIgnoreCase("get")){
                         values = new ArrayList<>();
                         try {
                             if(targetPort==port){
-                                values.add(getValue(key));
-
+                                Map<String,String> temp = lsm.get(key);
+                                if(temp==null){
+                                    temp =new HashMap<>();
+                                    temp.put("key","notFound");
+                                    temp.put("value","notFound");
+                                    temp.put("timestamp","1662651580471");
+                                }
+                                values.add(temp);
                                 for (int i = 1; i < ReplicationFactor; i++) {
                                     try {
                                         values.add(getValueRemote(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key));
@@ -97,7 +106,14 @@ public class Server
                                 for (int i = 0; i < ReplicationFactor; i++) {
                                     try {
                                         if(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1 == port){
-                                            values.add(getValue(key));
+                                            Map<String,String> temp = lsm.get(key);
+                                            if(temp==null){
+                                                temp =new HashMap<>();
+                                                temp.put("key","notFound");
+                                                temp.put("value","notFound");
+                                                temp.put("timestamp","1662651580471");
+                                            }
+                                            values.add(temp);
                                         }else{
                                             values.add(getValueRemote(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key));
                                         }
@@ -108,12 +124,12 @@ public class Server
                             }
                             if(values.size()>=QuorumR){
                                 System.out.println("Success Reads: "+values.size());
-                                value = values.get(0).split("#")[0];
-                                timeStamp = values.get(0).split("#")[1];
+                                value = values.get(0).get("value");
+                                timeStamp = values.get(0).get("timestamp");
                                 for (int i = 1; i < values.size(); i++) {
-                                    if(new Date(Long.parseLong(values.get(i).split("#")[1])).compareTo(new Date(Long.parseLong(timeStamp)))>0){
-                                        value = values.get(i).split("#")[0];
-                                        timeStamp = values.get(i).split("#")[1];
+                                    if(new Date(Long.parseLong(values.get(i).get("timestamp"))).compareTo(new Date(Long.parseLong(timeStamp)))>0){
+                                        value = values.get(i).get("value");
+                                        timeStamp = values.get(i).get("timestamp");
                                     }
                                 }
                                 out.println(value+" "+NumberOfRunningNodes);
@@ -128,15 +144,14 @@ public class Server
                     }
 
                     else if(line.split(" ")[0].equalsIgnoreCase("add")){
-                        value = line.split(" ")[2];
                         try {
+                            value = line.split(" ")[2];
                             if(targetPort==port){
-                                addValue(key,value, Instant.now().getEpochSecond()+"");writeCounter++;
+                                lsm.add(key,value);writeCounter++;
 
                                 for (int i = 1; i < ReplicationFactor; i++) {
                                     try {
-                                        System.out.println(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1);
-                                        System.out.println(addValueRemote(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value,Instant.now().getEpochSecond()+""));
+                                        System.out.println(addValueRemote(( (port - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
                                         writeCounter++;
                                     }catch (Exception e){
                                         System.out.println(e);
@@ -147,11 +162,12 @@ public class Server
                                 for (int i = 0; i < ReplicationFactor; i++) {
                                     try {
                                         if(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1 == port){
-                                            addValue(key,value, Instant.now().getEpochSecond()+"");writeCounter++;
+                                            lsm.add(key,value);
                                         }else{
-                                            System.out.println(addValueRemote(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value,Instant.now().getEpochSecond()+""));
+                                            System.out.println(addValueRemote(( (targetPort - 1 - DefaultPort+i) % NumberOfRunningNodes ) +DefaultPort+1,key,value));
                                         }
                                         writeCounter++;
+
                                     }catch (Exception e){
                                         System.out.println(e);
                                     }
@@ -175,18 +191,12 @@ public class Server
                     }
 
                 }else{  // I am helper
-                    /////////////////////////lsm tree
-                    ///////////////////////////////////////
-                    if(line.contains("#")){//write
+                    if(line.contains(",")){//write
                         try
                         {
-                            File file=new File(port+".txt");    //creates a new file instance
-                            FileWriter fw=new FileWriter(file,true);   //reads the file
-                            BufferedWriter bw=new BufferedWriter(fw);  //creates a buffering character input stream
-                            bw.append(line+"\n");
+                            String[] tokens = line.split(",");
+                            lsm.add(tokens[0],tokens[1]);
                             out.println("Written to "+port);
-                            bw.flush();
-                            bw.close();    //closes the stream and release the resources
                         }
                         catch(Exception e)
                         {
@@ -194,7 +204,13 @@ public class Server
                         }
                     }
                     else{//reading
-                        out.println(getValue(line));
+                        Map<String,String> res = lsm.get(line);
+                        System.out.println(res);
+                        if(res==null){
+                            out.println("notFound,notFound,1662651580471");
+                        }else{
+                            out.println(res.get("key")+","+res.get("value")+","+res.get("timestamp"));
+                        }
 
                     }
 
@@ -233,61 +249,67 @@ public class Server
 
     }
 
-    private String getValueRemote(int port, String key) throws Exception {
+    private Map<String,String> getValueRemote(int port, String key) throws Exception {
         Socket socket;
         DataOutputStream out;
         socket = new Socket(Address, port);
         out = new DataOutputStream(socket.getOutputStream());
         out.writeUTF(key);
-        String respose = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
+        String response = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
         socket.close();
         out.close();
-        return respose;
+        String[] tokens = response.split(",");
+        System.out.println(response);
+        Map<String,String> m = new HashMap<>();
+        m.put("key", tokens[0]);
+        m.put("value", tokens[1]);
+        m.put("timestamp", tokens[2]);
+        return m;
     }
 
-    private String addValueRemote(int port, String key,String value,String timeStamp) throws Exception {
+    private String addValueRemote(int port, String key,String value) throws Exception {
         Socket socket;
         DataOutputStream out;
         socket = new Socket(Address, port);
         out = new DataOutputStream(socket.getOutputStream());
-        out.writeUTF(key+"#"+value+"#"+timeStamp);
-        String respose = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
+        out.writeUTF(key+","+value);
+        String response = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
         socket.close();
         out.close();
-        return respose;
+        return response;
     }
 
-    private String getValue(String key){
-        String value="";
-        try
-        {
-            File file=new File(port+".txt");    //creates a new file instance
-            FileReader fr=new FileReader(file);   //reads the file
-            BufferedReader br=new BufferedReader(fr);  //creates a buffering character input stream
-            String l;
-            while((l=br.readLine())!=null)
-            {
-                if(l.split("#")[0].equals(key)){
-                    value = l.substring(l.indexOf('#')+1);
-                }
-            }
-            fr.close();    //closes the stream and release the resources
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
-        return value;
-    }
+//    private String getValue(String key){
+//        String value="";
+//        try
+//        {
+//            File file=new File(port+".txt");    //creates a new file instance
+//            FileReader fr=new FileReader(file);   //reads the file
+//            BufferedReader br=new BufferedReader(fr);  //creates a buffering character input stream
+//            String l;
+//            while((l=br.readLine())!=null)
+//            {
+//                if(l.split("#")[0].equals(key)){
+//                    value = l.substring(l.indexOf('#')+1);
+//                }
+//            }
+//            fr.close();    //closes the stream and release the resources
+//        }
+//        catch(Exception e)
+//        {
+//            e.printStackTrace();
+//        }
+//        return value;
+//    }
 
-    private void addValue(String key,String value, String timeStamp) throws Exception {
-            File file=new File(port+".txt");    //creates a new file instance
-            FileWriter fw=new FileWriter(file,true);   //reads the file
-            BufferedWriter bw=new BufferedWriter(fw);  //creates a buffering character input stream
-            bw.append(key+"#"+value+"#"+timeStamp+"\n");
-            bw.flush();
-            bw.close();    //closes the stream and release the resources
-    }
+//    private void addValue(String key,String value, String timeStamp) throws Exception {
+//            File file=new File(port+".txt");    //creates a new file instance
+//            FileWriter fw=new FileWriter(file,true);   //reads the file
+//            BufferedWriter bw=new BufferedWriter(fw);  //creates a buffering character input stream
+//            bw.append(key+"#"+value+"#"+timeStamp+"\n");
+//            bw.flush();
+//            bw.close();    //closes the stream and release the resources
+//    }
 
     public static void main(String args[])
     {
@@ -308,6 +330,7 @@ public class Server
             QuorumR = Integer.parseInt(prop.getProperty("quorumR"));
             QuorumW = Integer.parseInt(prop.getProperty("quorumW"));
             ReplicationFactor = Integer.parseInt(prop.getProperty("rf"));
+            Threshold = Integer.parseInt(prop.getProperty("threshold"));
             prop.setProperty("numberOfRunningNodes",(NumberOfRunningNodes+1)+"");
             prop.store(new FileOutputStream("config.properties"),null);
         }catch (Exception e){

@@ -17,7 +17,7 @@ public class RedBlackTree2
     // node creating subclass
     class Node
     {
-        int key;
+        String key;
         String value;
         String timestamp;
         Node left;
@@ -25,7 +25,7 @@ public class RedBlackTree2
         char colour;
         Node parent;
 
-        Node(int key, String value)
+        Node(String key, String value)
         {
             super();
             this.key = key; // only including data. not key
@@ -71,7 +71,7 @@ public class RedBlackTree2
     boolean lr = false;
     boolean rl = false;
     // helper function for insertion. Actually this function performs all tasks in single pass only.
-    Node insertHelp(Node root, int key, String newValue)
+    Node insertHelp(Node root, String key, String newValue)
     {
         // f is true when RED RED conflict is there.
         boolean f=false;
@@ -79,7 +79,7 @@ public class RedBlackTree2
         //recursive calls to insert at proper position according to BST properties.
         if(root==null)
             return(new Node(key, newValue));
-        else if(key<root.key)
+        else if(key.compareTo(root.key)<0)
         {
             root.left = insertHelp(root.left, key, newValue);
             root.left.parent = root;
@@ -89,7 +89,7 @@ public class RedBlackTree2
                     f = true;
             }
         }
-        else
+        else if(key.compareTo(root.key)>0)
         {
             root.right = insertHelp(root.right,key, newValue);
             root.right.parent = root;
@@ -98,9 +98,13 @@ public class RedBlackTree2
                 if(root.colour=='R' && root.right.colour=='R')
                     f = true;
             }
-            // at the same time of insertion, we are also assigning parent nodes
-            // also we are checking for RED RED conflicts
+
+        }else{
+            root.value = newValue;
+
         }
+        // at the same time of insertion, we are also assigning parent nodes
+        // also we are checking for RED RED conflicts
 
         // now lets rotate.
         if(this.ll) // for left rotate.
@@ -180,7 +184,7 @@ public class RedBlackTree2
     }
 
     // function to insert data into tree.
-    public void insert(int key, String newValue)
+    public void insert(String key, String newValue)
     {
         if(this.root==null)
         {
@@ -228,19 +232,19 @@ public class RedBlackTree2
     }
 
     // Create searchNode() method to get desired node from the Red-Black tree
-    public Map<String, String> searchNode(int key)
+    public Map<String, String> searchNode(String key)
     {
         return searchNode(this.root, key);
     }
-    private Map<String, String> searchNode(Node node, int key)
+    private Map<String, String> searchNode(Node node, String key)
     {
         Map<String, String> coordinates = null;
         while ((node != null) && coordinates == null)
         {
-            int nodeValue = node.key;
-            if (key < nodeValue)
+            String nodeValue = node.key;
+            if (key.compareTo(nodeValue)<0)
                 node = node.left;
-            else if (key > nodeValue)
+            else if (key.compareTo(nodeValue)>0)
                 node = node.right;
             else
             {

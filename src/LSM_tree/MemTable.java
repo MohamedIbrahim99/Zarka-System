@@ -19,7 +19,7 @@ public class MemTable {
     }
 
     // Add a new node in the memTable
-    public int add (int newKey, String newValue)
+    public int add (String newKey, String newValue)
     {
         redBlackTree.insert(newKey, newValue);
         size += 1;
@@ -27,7 +27,7 @@ public class MemTable {
     }
 
     // Search for the desired node in the memTable
-    public Map<String, String> get (int key)
+    public Map<String, String> get (String key)
     {
         // if this key doesn't exist it returns null
         return redBlackTree.searchNode(key);

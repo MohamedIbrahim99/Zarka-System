@@ -14,24 +14,25 @@ public class LSMTreeHandler {
     String folderPath;
     private Thread th1;
     private Thread th2;
-    final int threshold = 12;
+    private int threshold;
 
     private static List<Map<String, Long>> hashIndecies;
 
-    public LSMTreeHandler()
+    public LSMTreeHandler(String name, int threshold)
     {
+        this.threshold = threshold;
         this.memTableA = new MemTable();
         this.memTableB = new MemTable();
         this.isWorkingWithA = true;
         hashIndecies = new ArrayList<>();
         ///// folder path
-        this.folderPath = "./temp";
+        this.folderPath = "./"+name;
         File directory = new File(folderPath);
         if (! directory.exists()){
             directory.mkdir();
         }
         try {
-            Files.createDirectories(Paths.get("./temp"));
+            Files.createDirectories(Paths.get("./"+name));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -41,7 +42,7 @@ public class LSMTreeHandler {
     }
 
     // Add a new node in the memTable
-    public void add (int newKey, String newValue)
+    public void add (String newKey, String newValue)
     {
         if (isWorkingWithA) {
             int size = memTableA.add(newKey, newValue);
@@ -71,7 +72,7 @@ public class LSMTreeHandler {
     }
 
     // Search for the desired key
-    public Map<String, String> get (int key) throws IOException {
+    public Map<String, String> get (String key) throws IOException {
         Map<String, String> data;
         if (isWorkingWithA) {
             // check A first
@@ -105,7 +106,7 @@ public class LSMTreeHandler {
         return getFromSSTable(key);
     }
 
-    private Map<String, String> getFromSSTable(int key) throws IOException {
+    private Map<String, String> getFromSSTable(String key) throws IOException {
         Map<String, String> data = new HashMap<>();
         //Creating a File object for directory
         File directoryPath = new File(folderPath);
@@ -120,7 +121,7 @@ public class LSMTreeHandler {
             String line = reader.readLine();
             while (line != null){
                 String[] tokens = line.split(",");
-                if (Integer.parseInt(tokens[0]) == key){
+                if (tokens[0].compareTo(key)==0){
                     data.put("key", tokens[0]);
                     data.put("value", tokens[1]);
                     data.put("timestamp", tokens[2]);

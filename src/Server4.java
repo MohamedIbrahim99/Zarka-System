@@ -6,7 +6,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
-public class Server3
+public class Server4
 {
     private static String Address = "127.0.0.1";
     private static int NumberOfNodes;
@@ -29,7 +29,7 @@ public class Server3
     private PrintWriter out	 = null;
 
     // constructor with port
-    public Server3(int port) {
+    public Server4(int port) {
         this.port = port;
         notifyOthers();
         ch = new ConsistentHashing(NumberOfRunningNodes,DefaultPort,NumberOfVirtualNodes);
@@ -338,6 +338,6 @@ public class Server3
             System.exit(1);
         }
         NumberOfRunningNodes++;
-        Server3 server = new Server3(DefaultPort+NumberOfRunningNodes);
+        Server4 server = new Server4(DefaultPort+NumberOfRunningNodes);
     }
 }
